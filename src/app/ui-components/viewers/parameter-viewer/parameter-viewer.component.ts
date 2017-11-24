@@ -1,7 +1,8 @@
 import { Component, Injector } from '@angular/core';
-import { Viewer } from '../classes/Viewer';
-import { IGraphNode } from '../classes/IGraphNode';
-import { InputPort } from '../classes/IPort';
+
+import { Viewer } from '../../../base-classes/viz/Viewer';
+import { IGraphNode } from '../../../base-classes/node/NodeModule';
+import { InputPort } from '../../../base-classes/port/PortModule';
 
 @Component({
   selector: 'app-parameter-viewer',
@@ -42,9 +43,9 @@ export class ParameterViewerComponent extends Viewer {
       alert(type);
     }
 
-    updateInputDataValue($event, input): void{
+    updateComputedValue($event, input): void{
       let value: string = $event.srcElement.innerText;
-      input.setValue(value);
+      input.setComputedValue(value);
 
       // put a timeout on this update or something similar to solve jumpiness
       this.flowchartService.update();

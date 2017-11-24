@@ -1,6 +1,8 @@
 import { Component, Injector, OnInit } from '@angular/core';
-import { Viewer } from '../classes/Viewer';
-import { IGraphNode } from '../classes/IGraphNode';
+
+import { Viewer } from '../../../base-classes/viz/Viewer';
+import { IGraphNode } from '../../../base-classes/node/NodeModule';
+
 import * as THREE from 'three';
 
 @Component({
@@ -53,7 +55,7 @@ export class GeometryViewerComponent extends Viewer implements OnInit{
 	getGeometry(node: IGraphNode): string[]{
 
 		let valueTypes: string[] = [];
-		let valueObject: any = node.getValue();
+		let valueObject: any = node.getResult();
 
 		for( let key in valueObject ){
 			valueTypes.push(valueObject[key]);

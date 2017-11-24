@@ -1,7 +1,8 @@
 import { Component, Injector, OnInit } from '@angular/core';
-import { Viewer } from '../classes/Viewer';
-import { HttpClient } from '@angular/common/http';
-import { ModuleService } from '../data/module.service';
+
+import { ModuleService } from '../../../global-services/module.service';
+
+import { Viewer } from '../../../base-classes/viz/Viewer';
 
 @Component({
   selector: 'app-flowchart-controls',
@@ -11,37 +12,26 @@ import { ModuleService } from '../data/module.service';
 export class FlowchartControlsComponent extends Viewer implements OnInit{
 
   // doesn't really need to extend viewer 
-  constructor(injector: Injector, private http: HttpClient, private modules: ModuleService) { super(injector); }
+  constructor(injector: Injector, private modules: ModuleService) { super(injector, "flowchart-controls"); }
 
   ngOnInit(): void{
     this.newfile();
   }
 
   newfile(): void{
-    this.flowchartService.newFlowchart();
+    this.flowchartService.newFile();
   }
 
   execute(): void{
     this.flowchartService.execute();
   }
 
-  loadFile(): void{
-  	let file = "../assets/examples/test_2.json";
-  	this.http.get(file).subscribe(data => {
-  	      	
-            // Read the result field from the JSON response.
-            // todo: check validity of data
-
-            // load required module
-            this.modules.loadModules(data["module"]);
-
-  	      	// Load data in app service
-            this.flowchartService.loadChartFromData(data, "js");
-      });
+  loadFile(url ?:string): void{
+    this.flowchartService.loadFile(url);
   }
 
   save(): void{
-    this.flowchartService.save();
+    this.flowchartService.saveFile();
   }
 
 }

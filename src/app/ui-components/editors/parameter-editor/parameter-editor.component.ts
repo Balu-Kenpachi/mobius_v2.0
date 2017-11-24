@@ -1,7 +1,11 @@
 import { Component, Injector } from '@angular/core';
-import { Viewer } from '../classes/Viewer';
-import { IGraphNode } from '../classes/IGraphNode';
-import { InputPort } from '../classes/IPort';
+
+import { IGraphNode } from '../../../base-classes/node/NodeModule';
+import { InputPort, PortTypes } from '../../../base-classes/port/PortModule';
+
+import { Viewer } from '../../../base-classes/viz/Viewer';
+import { FlowchartService } from '../../../global-services/flowchart.service';
+
 
 @Component({
   selector: 'app-parameter-editor',
@@ -10,17 +14,19 @@ import { InputPort } from '../classes/IPort';
 })
 export class ParameterEditorComponent extends Viewer{
 
-	  private _node: IGraphNode;
-	  private _inputs: InputPort[];
     private isVisible: boolean = false;
 
+    private _node: IGraphNode;
+    private _inputs: InputPort[];
+
     // shift to iport
-    private portOpts: any[] = [
-      {name: "default", id: 0},
-      {name: "input", id: 1},
-      {name: "colorpicker", id: 2}, 
-      {name: "dropdown", id: 3}
-    ]
+    private portOpts: PortTypes[] = [
+        PortTypes.Default, 
+        PortTypes.Input, 
+        PortTypes.ColorPicker, 
+        PortTypes.FilePicker, 
+        PortTypes.Dropdown
+    ]; 
 
 	  constructor(injector: Injector){  super(injector, "parameter-editor"); }
 
@@ -29,33 +35,34 @@ export class ParameterEditorComponent extends Viewer{
       this._inputs = undefined;
     }
 
+
+    //
+    //
+    //
   	addInput(): void{
-      console.log(this._node.addInput());
+      this._node.addInput();
   		this.flowchartService.update();
 	  }
 
-    deleteInput(inp: InputPort) :void{
-      this._node.removeInput(inp);
+    deleteInput(portIndex: number) :void{
+      this._node.deleteInput(portIndex);
       this.flowchartService.update();
     }
 
-    updateInputName($event, input): void{
+    updateInputName($event, input: InputPort): void{
       let name: string = $event.srcElement.innerText;
       input.setName(name);
-
-
       // put a timeout on this update or something similar to solve jumpiness
       this.flowchartService.update();
     }
 
-    updateInputType(type:number, input: InputPort){
-       input.setType( this.portOpts[type] )
-       this.flowchartService.update();
+    updateInputType(type: PortTypes, input: InputPort){
+      input.setType(type);
     }
 
-    updateInputDValue($event, input: InputPort): void{
+    updateDefaultValue($event, input: InputPort): void{
       let value: string = $event.srcElement.innerText;
-      input.setDValue(value);
+      input.setDefaultValue(value)
 
       // put a timeout on this update or something similar to solve jumpiness
       this.flowchartService.update();
