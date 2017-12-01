@@ -22,6 +22,7 @@ export class CodeGeneratorJS extends CodeGenerator{
 			let connector_lines: any = [];
 			let code_block: string = "";
 
+			let nodeOrder: number[] = flow.getNodeOrder();
 			let all_nodes: IGraphNode[] = flow.getNodes();
 			let all_edges: IEdge[] = flow.getEdges();
 
@@ -45,19 +46,20 @@ export class CodeGeneratorJS extends CodeGenerator{
 
 			// get all the codes of the different functions and the function calls 
 			
-			for(let c=0; c < all_nodes.length; c++){
+			for(let c=0; c < nodeOrder.length; c++){
 				// check inputs connected to outputs
-				var node = all_nodes[c];
+				var nodeIndex = nodeOrder[c];
+				var node = all_nodes[nodeIndex];
 				code_defs.push(this.getNodeCode(node));
 
-				if(connector_lines[c] !== undefined){
-					fn_calls.push(connector_lines[c].join(";\n"));
+				if(connector_lines[nodeIndex] !== undefined){
+					fn_calls.push(connector_lines[nodeIndex].join(";\n"));
 				}
 
 				fn_calls.push( this.getFunctionCall(node) );
 			}
 
-			code_block = code_defs.join(";\n") + fn_calls.join(";\n") + ";";
+			code_block = code_defs.join(";\n\n") + "\n" + fn_calls.join(";\n") + ";";
 
 			// check if code works by uncommenting this line
 			// eval(code_block);
@@ -126,7 +128,7 @@ export class CodeGeneratorJS extends CodeGenerator{
 
 			// make function
 			fn_code += "function " + node.getName() + node.getVersion() + "( " + params.join(", ") + " ) { \n" ;
-			fn_code += initializations.join(";\n") + ";\n";
+			fn_code += ( initializations.length > 0 ? initializations.join(";\n") + ";\n" : "" );
 			
 			// add outputs 
 			let results :string[]= [], opInits :string[] = [];
@@ -138,7 +140,7 @@ export class CodeGeneratorJS extends CodeGenerator{
 			}
 			
 			// add initialization for outputs
-			fn_code += "\n" + opInits.join(";\n") + ";\n"; 
+			fn_code += ( opInits.length > 0 ? "\n" + opInits.join(";\n") + ";\n" : ""); 
 
 			// add procedure
 			for( let line=0; line <  node.getProcedure().length; line ++ ){
@@ -149,7 +151,7 @@ export class CodeGeneratorJS extends CodeGenerator{
 			fn_code += "\n" + "return " + " { " + results.join(", ") + " } " + ";";
 
 			// ending
-			fn_code += "\n }"
+			fn_code += "\n }\n"
 
 			return fn_code;
 		}
