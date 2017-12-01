@@ -22,6 +22,8 @@ export interface IProcedure{
 
 	getType(): ProcedureTypes; 
 
+	update(prodData: any, parent: IProcedure): void;
+
 	isSelected(): boolean; 
 	select(): void;
 	unselect(): void;
@@ -29,9 +31,16 @@ export interface IProcedure{
 	enable(): void;
 	disable(): void;
 
+	hasParent(): boolean;
+	setParent(parent: IProcedure): void;
+	getParent(): IProcedure;
+
 	hasChildren(): boolean;
 	getChildren(): IProcedure[];
 	addChild(procedure: IProcedure): void;
+	addChildFromData(child: IProcedure): void;
+	addChildAtPosition(procedure: IProcedure, index: number): void;
+	deleteChild(procedure: IProcedure): void;
 
 	getLeftComponent(): IComponent;
 	setLeftComponent(expression: IComponent): void;

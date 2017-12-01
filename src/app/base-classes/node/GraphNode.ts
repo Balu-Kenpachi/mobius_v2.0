@@ -1,6 +1,6 @@
 import {IdGenerator} from '../misc/GUID';
 
-import {IProcedure} from "../procedure/ProcedureModule";
+import {IProcedure, ProcedureFactory, ProcedureTypes} from "../procedure/ProcedureModule";
 import {InputPort, OutputPort} from "../port/PortModule";
 import {ICodeGenerator} from "../code/CodeModule";
 
@@ -98,6 +98,13 @@ export class GraphNode implements IGraphNode{
 			this._outputs.push(output);
 		}
 
+		// add procedure
+		let procedureArr: IProcedure[] = nodeData["_procedure"];
+		for( let prodIndex in procedureArr ){
+			let procedure: IProcedure = ProcedureFactory.getProcedureFromData(procedureArr[prodIndex], undefined);
+			this._procedure.push(procedure);
+		}
+
 	}
 
 	//
@@ -169,7 +176,22 @@ export class GraphNode implements IGraphNode{
 		this._procedure.push(prod);
 	}
 
-	deleteProcedure(index: number): void{
+	addProcedureAtPosition(prod: IProcedure, index: number): void{
+		this._procedure.splice(index, 0, prod);
+	}
+
+	deleteProcedure(prod: IProcedure): void{
+		this._procedure = this._procedure.filter(function(child: IProcedure){ 
+			if(child === prod){
+				return false; 
+			}
+			else{
+				return true;
+			}
+		});
+	}
+
+	deleteProcedureAtPosition(index: number): void{
 		this._procedure.splice(index, 1);
 	}
 

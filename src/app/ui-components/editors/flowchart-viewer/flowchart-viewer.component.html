@@ -4,62 +4,96 @@
 	    <mat-panel-title class='header'>
 	      <div class='header'>Flowchart Viewer</div>
 	      <div class='btn-group' click-stop-propagation>
-			<button (click)="resetViewer()">R</button>
+			<!-- <button (click)="resetViewer()">R</button> -->
 			<button (click)="addNode($event)">+</button>
 		  </div>
 	    </mat-panel-title>
   	</mat-expansion-panel-header>
-	<div class='container' (wheel)="scale($event)">
+	<div class='container'>
+			
+			<!-- svg canvas to draw the edges -->
+			<svg xmlns="http://www.w3.org/2000/svg" 
+				class="graph-container" 
+				id="graph-edges" 
+				[style.zoom]="zoom">
 
-			<svg xmlns="http://www.w3.org/2000/svg" class="graph-container" id="graph-edges" [style.zoom]="zoom">
-				<circle cx="10" cy="10" r="2" fill="red"></circle>
-				<g *ngFor="let connection of conn">
-					<path d="connection.getPath()" stroke="black" fill="transparent"/>
+				<g *ngFor="let edge of _edges">
+					<path 
+					  [attr.d]="getEdgePath(edge)" 
+					  (click)="edgeClicked()"
+					  stroke="blue"
+					  stroke-width="3" fill="none" />
 				</g>
+				
+				<!-- dragging path -->
+				<g id="temporary-edge" [class.hidden]="!_linkMode" >
+					<path 
+					[attr.d]="edgeString(mouse_pos.start, mouse_pos.current)" stroke="blue"
+ 				 	stroke-width="5" fill="none" stroke-dasharray="5, 5"/>
+ 					<circle id="pointC" [attr.cx]="mouse_pos.current.x" [attr.cy]="mouse_pos.current.y" r="5" />
+ 				</g>
+
 			</svg>
- 
-			<div class="graph-container" id="graph-nodes" ondragover="return false" [style.zoom]="zoom" >
+
+			<!-- div container for the nodes -->
+			<div class="graph-container" 
+				id="graph-nodes" ondragover="return false" [style.zoom]="zoom" >
 				
 				<!-- all nodes -->
 				<div class="node-container">
 
 					<!-- one node -->
-					<div  class="node" draggable=true 
-							*ngFor="let node of _nodes; let i = index" 
-							[style.width.px]="node.width"
+					<div  class="node" 
+							*ngFor="let node of _nodes; let node_index = index" 
 							[style.left.px]="node.position[0]" 
-							[style.top.px]="node.position[1]" 
-							(dragstart)="onDragStart($event, node)" 
-							(drag)="onDrag($event, node)" 
-							(dragend)="dragEnd($event, node)">
-						
+							[style.top.px]="node.position[1]">
+
 						<!--inputs-->
 						<div class="port-container input">
 							<div class="port" 
-								*ngFor="let port of node.getInputs()"  
-								(click)="link($event, port)"></div>
+								[class.connected]="port.isConnected()" 
+								*ngFor="let port of node.getInputs(); let pi=index"  
+								id="n{{node_index}}pi{{pi}}"
+								draggable=true
+								(dragstart)="portDragStart($event, port, [node_index, pi])" 
+								(drag)="portDragging($event, port)" 
+								(dragend)="portDragEnd($event, port)"
+								(drop)="portDrop($event, port, [node_index, pi])">
+							</div>
+							<div class="btn-sm input" (click)="addPort(node_index, 'in')">+</div>
 						</div>
 					
 						<!-- node body -->
-						<div class="node-body" [class.selected]="isSelected(node)" 
-							(click)="clickNode($event, i)">
-							{{node.getName()}}
+						<div class="node-body" 
+							[class.selected]="isSelected(node)" 
+							(click)="clickNode($event, node_index)"
+							draggable=true  
+							(dragstart)="nodeDragStart($event, node)" 
+							(drag)="nodeDragging($event, node)" 
+							(dragend)="nodeDragEnd($event, node)">
+							<div class="node-name">{{node.getName()}}</div>
 						</div>
 				
 						<!-- outputs -->
 						<div class="port-container output">
-							<div class="port" 
-								*ngFor="let port of node.getOutputs()"
-								(click)="link($event, port)"></div>
+							<div class="port"
+								[class.connected]="port.isConnected()" 
+								*ngFor="let port of node.getOutputs(); let po=index"
+								id="n{{node_index}}po{{po}}"
+								draggable=true
+								(dragstart)="portDragStart($event, port, [node_index, po])" 
+								(drag)="portDragging($event, port)" 
+								(dragend)="portDragEnd($event, port)"
+								(drop)="portDrop($event, port, [node_index, po])">
+							</div>
+							<div class="btn-sm output" (click)="addPort(node_index, 'out')">+</div>
 						</div>
-						
 				
 					</div>
 				
 				</div>
 
 			</div>
-
 	</div>
 </mat-expansion-panel>
 

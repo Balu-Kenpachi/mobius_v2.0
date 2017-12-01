@@ -5,7 +5,12 @@ import {Subject} from 'rxjs/Subject';
 
 import {IFlowchart, Flowchart, FlowchartReader} from '../base-classes/flowchart/FlowchartModule';
 import {IGraphNode, GraphNode} from '../base-classes/node/NodeModule';
-import {ICodeGenerator, CodeFactory} from "../base-classes/code/CodeModule";
+import {ICodeGenerator, CodeFactory, Module} from "../base-classes/code/CodeModule";
+
+import * as CircularJSON from 'circular-json';
+
+
+import * as ModuleSet from "../../assets/modules/AllModules";
 
 @Injectable()
 export class FlowchartService {
@@ -19,6 +24,7 @@ export class FlowchartService {
   private _flowchart: IFlowchart;
 
   private code_generator: ICodeGenerator = CodeFactory.getCodeGenerator("js");
+  private _moduleSet: Module[];
 
   private _selectedNode: number = 0;
   private _selectedPort: number = 0;
@@ -27,7 +33,7 @@ export class FlowchartService {
     return this._flowchart != undefined;
   }
 
-  constructor(private http: HttpClient) {  }
+  constructor(private http: HttpClient) { this.newFile() };
 
   // 
   // message handling between components
@@ -52,40 +58,66 @@ export class FlowchartService {
     this.sendMessage("Updated");
   }
 
-  //
-  //    sets the main scene
-  //
-  loadFile(url: string): void{
-
-    let file = "../assets/examples/test_scene.mob";
-    this.http.get(file).subscribe(data => {
-            
-            // Read the result field from the JSON response.
-            // todo: check validity of data
-            console.log(data);
-
-            // load required module
-            //this.modules.loadModules(data["module"]);
-
-            let jsonData: {language: string, flowchart: JSON, modules: JSON};
-
-            // load the required code generator
-            if (this.code_generator.getLanguage() != data["language"] && data["language"] !== undefined){
-              this.code_generator = CodeFactory.getCodeGenerator(data["language"])
-            }
-
-            this._flowchart = FlowchartReader.readFlowchartFromData(data["flowchart"])
-            console.log(this._flowchart);
-            this.update();
-
-      });
-
-    // change the module based on the module name
-    //this._flowchart = <IFlowchart>JSON.parse();//this._fc.dataToFlowchart(data, language);
-    
-    // tell subcribers to update 
+  
+  readTextFile(file: string){
+      
   }
 
+  loadFile(url: string): void{
+      let file = url || "../assets/examples/Scene1511943368602.mob";
+
+      let _this = this;
+
+      var rawFile = new XMLHttpRequest();
+      rawFile.open("GET", file, false);
+      rawFile.onreadystatechange = function ()
+      {
+          if(rawFile.readyState === 4)
+          {
+              if(rawFile.status === 200 || rawFile.status == 0)
+              {
+                  var allText = rawFile.responseText;
+
+                  let jsonData: {language: string, flowchart: JSON, modules: JSON};
+                  let data = CircularJSON.parse(allText);
+
+                  // load the required modules
+                 /* _this.modules.loadModules(data["module"]); */
+
+                  // load the required code generator
+                  if (_this.code_generator.getLanguage() != data["language"] && data["language"] !== undefined){
+                    _this.code_generator = CodeFactory.getCodeGenerator(data["language"])
+                  }
+
+                  // read the flowchart
+                  _this._flowchart = FlowchartReader.readFlowchartFromData(data["flowchart"]);
+                  _this.update();
+              }
+          }
+      }
+      rawFile.send(null);
+  }
+
+  loadModules(modules: Object[]): void{
+
+    this._moduleSet = [];
+    let moduleSet = this._moduleSet;
+
+    modules.map(function(module){
+        let modClass = ModuleSet[module["name"]];
+        if(modClass.version == module["version"] && modClass.author == module["author"]){
+          moduleSet.push(new modClass());
+        }
+        else{
+          throw Error("Module not compatible. Please check version / author");
+        }
+    })
+
+  }
+
+  getModules(): Module[]{
+    return this._moduleSet;
+  }
 
   //
   // gets the textual representation of the actual flowchart
@@ -109,6 +141,9 @@ export class FlowchartService {
     this._selectedNode = 0;
     this._selectedPort = 0;
     this.update();
+
+    this.loadModules([{name: "Math", version: 1, author: "AKM"}]);
+
     return this._flowchart;
   }
 
@@ -140,6 +175,8 @@ export class FlowchartService {
 
   addEdge(outputAddress: number[], inputAddress: number[]):  void{
     this._flowchart.addEdge(outputAddress, inputAddress);
+    this._flowchart.getNodeByIndex(outputAddress[0]).getOutputByIndex(outputAddress[1]).connect();
+    this._flowchart.getNodeByIndex(inputAddress[0]).getInputByIndex(inputAddress[1]).connect();
     this.update();
   }
 
@@ -197,7 +234,7 @@ export class FlowchartService {
     file["modules"] = [];
     file["flowchart"] = this._flowchart;
 
-    fileString = JSON.stringify(file);
+    fileString = CircularJSON.stringify(file);
 
     this.downloadContent({
         type: 'text/plain;charset=utf-8',

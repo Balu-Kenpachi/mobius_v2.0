@@ -32,6 +32,12 @@
 
 		#graph-edges{
 			background-color: transparent;
+
+			#temporary-edge{
+				.hidden{
+					display: none;
+				}
+			}
 		}
 
 		#graph-nodes{
@@ -47,27 +53,39 @@
 		.node{
 			position: absolute;
 			z-index: 3;
-			cursor: move !important;
 			margin: 0px;
 			min-width: 70px;
 
 			.node-body{
+				position: relative;
 				height: 60px;
 				border: 3px solid black;
 				border-radius: 10px;
 				background-color: white;
 				text-align: center;
+				cursor: move;
+				
 
 				&.selected{
 					background-color: #A4EAA4;
 				}
+
+				.node-name{
+					font-family: sans-serif; 
+					font-size: 14px; 
+					line-height: 16px;
+
+				}
+
+				
 			}
 
 			.port-container{
+				position: relative;
 				height: 10px;
 				width: 100%;
 				text-align: center;
-				z-index: 4;
+				z-index: 1;
 
 				&.input{
 					margin-top: -2px;
@@ -92,6 +110,31 @@
 					&:hover{
 						background-color: orange;
 						cursor: pointer;
+					}
+
+					&.connected{
+						background-color: green;
+					}
+				}
+
+				.btn-sm{
+					position: absolute; 
+					right: -15px;
+					border: 2px solid gray;
+					color: gray;
+					height: 15px; 
+					width: 15px;
+					font-size: 10px; 
+					line-height: 15px;
+					cursor: pointer;
+
+					&.input{
+						top: -5px; 
+					}
+
+					&.output{
+						bottom: 0px; 
+						left: -15px;
 					}
 				}
 

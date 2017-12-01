@@ -3,10 +3,12 @@
 //  Implement IFlowchart
 //	
 //
+//
 
 import {IFlowchart} from './IFlowchart';
 import {IGraphNode, IEdge} from '../node/NodeModule';
 import {ICodeGenerator} from '../code/CodeModule';
+
 
 export class Flowchart implements IFlowchart{
 
@@ -53,6 +55,8 @@ export class Flowchart implements IFlowchart{
 	addEdge(outputAddress: number[], inputAddress: number[]): number{
 
 		if(outputAddress.length !== 2 || inputAddress.length !== 2){
+			console.log("inputAddress", inputAddress);
+			console.log("outputAddress", outputAddress);
 			throw Error("Invalid arguments for edge");
 		}
 
@@ -203,10 +207,11 @@ export class Flowchart implements IFlowchart{
 	}*/
 
 	save(): string{
-		this.reset();
+		throw Error("Not implemented");
+		/*this.reset();
 		//todo:
-		console.log(JSON.stringify(this));
-		return JSON.stringify(this);
+		console.log(CircularJSON.stringify(this));
+		return CircularJSON.stringify(this);*/
 	}
 
 	readFromJSON(filename: string): void{
