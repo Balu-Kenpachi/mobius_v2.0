@@ -63,39 +63,31 @@ export class FlowchartService {
       
   }
 
-  loadFile(url: string): void{
-      let file = url || "../assets/examples/Scene1511943368602.mob";
+  loadFile(fileString: string): void{
 
       let _this = this;
+      let jsonData: {language: string, flowchart: JSON, modules: JSON};
+      try{
+        let data = CircularJSON.parse(fileString);
 
-      var rawFile = new XMLHttpRequest();
-      rawFile.open("GET", file, false);
-      rawFile.onreadystatechange = function ()
-      {
-          if(rawFile.readyState === 4)
-          {
-              if(rawFile.status === 200 || rawFile.status == 0)
-              {
-                  var allText = rawFile.responseText;
+        // load the required modules
+         /* _this.modules.loadModules(data["module"]); */
 
-                  let jsonData: {language: string, flowchart: JSON, modules: JSON};
-                  let data = CircularJSON.parse(allText);
+        // load the required code generator
+        if (_this.code_generator.getLanguage() != data["language"] && data["language"] !== undefined){
+          _this.code_generator = CodeFactory.getCodeGenerator(data["language"])
+        }
 
-                  // load the required modules
-                 /* _this.modules.loadModules(data["module"]); */
-
-                  // load the required code generator
-                  if (_this.code_generator.getLanguage() != data["language"] && data["language"] !== undefined){
-                    _this.code_generator = CodeFactory.getCodeGenerator(data["language"])
-                  }
-
-                  // read the flowchart
-                  _this._flowchart = FlowchartReader.readFlowchartFromData(data["flowchart"]);
-                  _this.update();
-              }
-          }
+        // read the flowchart
+        _this._flowchart = FlowchartReader.readFlowchartFromData(data["flowchart"]);
+        console.log(_this._flowchart);
+        _this.update();
+        
       }
-      rawFile.send(null);
+      catch(err){
+        alert("Error loading file");
+      }
+
   }
 
   loadModules(modules: Object[]): void{
@@ -175,8 +167,15 @@ export class FlowchartService {
 
   addEdge(outputAddress: number[], inputAddress: number[]):  void{
     this._flowchart.addEdge(outputAddress, inputAddress);
-    this._flowchart.getNodeByIndex(outputAddress[0]).getOutputByIndex(outputAddress[1]).connect();
-    this._flowchart.getNodeByIndex(inputAddress[0]).getInputByIndex(inputAddress[1]).connect();
+
+    let output = this._flowchart.getNodeByIndex(outputAddress[0]).getOutputByIndex(outputAddress[1])
+    output.connect();
+    let input = this._flowchart.getNodeByIndex(inputAddress[0]).getInputByIndex(inputAddress[1])
+    input.connect();
+
+    input.setComputedValue({port: outputAddress});
+
+    this._flowchart.getNodeByIndex(inputAddress[0]).getInputByIndex(inputAddress[1])
     this.update();
   }
 

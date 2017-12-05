@@ -6,8 +6,6 @@
 	flex-flow: row wrap;
 	justify-content: space-between;
 
-	border-bottom: 1px solid gray;
-	
 	background-color: $toolbar-color;
 	height: $toolbar-height;
 	line-height: $toolbar-height;
@@ -22,6 +20,7 @@
 	#branding{
 		font-weight: bolder;
 		cursor: pointer;
+		font-size: 14px;
 	}
 
 
@@ -30,6 +29,11 @@
 		@extend .reset;
 
 		list-style: none;
+
+		.menu{
+			margin-left: 10px;
+			width: 200px;
+		}
 
 		li{
 			display: inline;
@@ -40,8 +44,10 @@
 				color: #5D5959;
 				cursor: pointer;
 			}
+
 		}
 	}
 
 
 }
+

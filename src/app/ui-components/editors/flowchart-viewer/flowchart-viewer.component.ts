@@ -7,6 +7,8 @@ import { InputPort, OutputPort } from '../../../base-classes/port/PortModule';
 import { Viewer } from '../../../base-classes/viz/Viewer';
 import { FlowchartService } from '../../../global-services/flowchart.service';
 
+import {MatTooltipModule} from '@angular/material/tooltip';
+
 @Component({
   selector: 'app-flowchart-viewer',
   templateUrl: './flowchart-viewer.component.html',
@@ -121,7 +123,6 @@ export class FlowchartViewerComponent extends Viewer{
   addEdge(outputPortAddress: number[], inputPortAddress: number[]): void{
     this.flowchartService.addEdge(outputPortAddress, inputPortAddress);
   }
-
 
   //
   //
@@ -375,7 +376,8 @@ export class FlowchartViewerComponent extends Viewer{
   //
   //
   //
-  executeFlowchart(): void{
+  executeFlowchart($event): void{
+      $event.stopPropagation();
       this.flowchartService.execute();
   }
 }

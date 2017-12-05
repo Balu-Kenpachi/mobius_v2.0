@@ -2,34 +2,35 @@ $header-height: 30px;
 
 .viewer{
 
-	border: 1px solid gray;
-
-	max-height: 450px; 
+	height: auto;
+	width: 100%; 
 	overflow: auto;
 	
 	padding: 0px;
 	margin: 0px;
 
 	.header{
+
+		display: flex; 
+		flex-direction: row; 
+		justify-content: space-between;
+
 		position: relative;
-		height: $header-height; 
 		font-size: 14px; 
 		font-weight: 600; 
 		line-height: $header-height;
-		padding: 0px 5px;
+		text-transform: uppercase;
+		padding: 10px;
+		letter-spacing: 1.5px;
+		height: $header-height;
 
 		.btn-group{
-			position: absolute;
-			right: 0px;
-			padding: 0px; 
-			margin: 0px;
 			height: $header-height; 
 
 			button{
 				width: 0.9*$header-height; 
 				height: 0.9*$header-height; 
 				margin: 0px;
-				background: white; 
 				border: 1px solid #B4B1B1;
 				box-shadow: none;
 
@@ -44,6 +45,7 @@ $header-height: 30px;
 
 	.container{
 		min-height: 300px;
+		
 	}
 
 	button{
