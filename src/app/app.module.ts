@@ -12,8 +12,10 @@ import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeModule } from 'angular-tree-component';
 
 import { FlowchartService } from './global-services/flowchart.service';
-import { ModuleService } from './global-services/module.service';
+import { LayoutService } from './global-services/layout.service'; 
 
+/*import { ModuleService } from './global-services/module.service';
+*/
 import { FlowchartControlsComponent } from './ui-components/controls/flowchart-controls/flowchart-controls.component';
 import { MenuComponent } from './ui-components/controls/main-menu/menu.component';
 
@@ -26,6 +28,8 @@ import { GeometryViewerComponent } from './ui-components/viewers/geometry-viewer
 import { ModuleViewerComponent } from './ui-components/viewers/module-viewer/module-viewer.component';
 import { ParameterViewerComponent } from './ui-components/viewers/parameter-viewer/parameter-viewer.component';
 import { ModuleboxComponent } from './ui-components/controls/modulebox/modulebox.component';
+import { EditorComponent } from './ui-components/editors/editor/editor.component';
+import { ViewerContainerComponent } from './ui-components/viewers/viewer-container/viewer-container.component';
 
 @NgModule({
   declarations: [
@@ -39,7 +43,9 @@ import { ModuleboxComponent } from './ui-components/controls/modulebox/modulebox
     ProcedureEditorComponent,
     ParameterViewerComponent,
     ParameterEditorComponent,
-    ModuleboxComponent
+    ModuleboxComponent,
+    EditorComponent,
+    ViewerContainerComponent
   ],
   entryComponents: [
     ModuleboxComponent
@@ -53,7 +59,7 @@ import { ModuleboxComponent } from './ui-components/controls/modulebox/modulebox
     TreeModule,
     CustomMaterialModule
   ],
-  providers: [FlowchartService, ModuleService],
+  providers: [FlowchartService, LayoutService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

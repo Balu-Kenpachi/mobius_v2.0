@@ -109,7 +109,7 @@ export class CodeGeneratorJS extends CodeGenerator{
 			return fn_def;
 		}
 
-		getNodeCode(node: IGraphNode): string{
+		getNodeCode(node: IGraphNode): string{ 	
 			let nodeVars: string[] = [];
 			let fn_code :string = "";
 
@@ -128,7 +128,10 @@ export class CodeGeneratorJS extends CodeGenerator{
 
 				}
 				
-				initializations.push( this.generateInputPortCode(inp) );
+				let input_port_code: string = this.generateInputPortCode(inp);
+				if(input_port_code !== ""){
+					initializations.push( input_port_code );
+				}
 
 			}
 

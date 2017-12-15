@@ -1,55 +1,61 @@
-$header-height: 30px; 
-
 .viewer{
 
-	width: 100%; 
-	overflow: auto;
-	
-	padding: 0px;
-	margin: 0px;
 
-	.header{
 
-		display: flex; 
-		flex-direction: row; 
-		justify-content: space-between;
+	.default{
+		font-size: 14px;
+		color: gray;
+		line-height: 150px;
+		text-align: center;
+	}
+/* 	width: 100%; 
+overflow: auto;
 
-		position: relative;
-		font-size: 14px; 
-		font-weight: 600; 
-		line-height: $header-height;
-		text-transform: uppercase;
-		letter-spacing: 1.5px;
-		height: $header-height;
+padding: 0px;
+margin: 0px;
 
-		color: #ADADAD;
+.header{
 
-		.btn-group{
-			height: $header-height; 
+	display: flex; 
+	flex-direction: row; 
+	justify-content: space-between;
 
-			button{
-				width: 0.9*$header-height; 
-				height: 0.9*$header-height; 
-				margin: 0px;
-				border: 1px solid #B4B1B1;
-				box-shadow: none;
+	position: relative;
+	font-size: 14px; 
+	font-weight: 600; 
+	line-height: $header-height;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	height: $header-height;
 
-				&:focus{
-					
-				}
+	color: #ADADAD;
+
+	.btn-group{
+		height: $header-height; 
+
+		button{
+			width: 0.9*$header-height; 
+			height: 0.9*$header-height; 
+			margin: 0px;
+			border: 1px solid #B4B1B1;
+			box-shadow: none;
+
+			&:focus{
+				
 			}
-			
 		}
-
+		
 	}
 
-	.container{
-	}
+}
 
-	button{
-		&:focus{
-			
-		}
+.container{
+}
+
+button{
+	&:focus{
+		
 	}
+} */
 
 }

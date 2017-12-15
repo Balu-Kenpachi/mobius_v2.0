@@ -1,13 +1,14 @@
-import { Component, Injector, OnInit } from '@angular/core';
-import { NgModel } from '@angular/forms';
+import {Component, Injector, OnInit} from '@angular/core';
+import {NgModel} from '@angular/forms';
 
-import { IGraphNode } from '../../../base-classes/node/NodeModule';
-import { IProcedure, ProcedureFactory, ProcedureTypes } from '../../../base-classes/procedure/ProcedureModule';
-import { Viewer } from '../../../base-classes/viz/Viewer';
+import {IGraphNode} from '../../../base-classes/node/NodeModule';
+import {IProcedure, ProcedureFactory, ProcedureTypes} from '../../../base-classes/procedure/ProcedureModule';
+import {Viewer} from '../../../base-classes/viz/Viewer';
 
-import { FlowchartService } from '../../../global-services/flowchart.service';
+import {FlowchartService} from '../../../global-services/flowchart.service';
 
-import { ModuleboxComponent } from '../../controls/modulebox/modulebox.component';
+import {ModuleboxComponent} from '../../controls/modulebox/modulebox.component';
+import {ModuleUtils} from "../../../base-classes/code/CodeModule";
 
 import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
 
@@ -22,6 +23,9 @@ export class ProcedureEditorComponent extends Viewer {
 
   	private _procedureArr: IProcedure[] = [];
   	private _node: IGraphNode;
+
+  	private _showToolbox: boolean = false;
+  	private _moduleList = [];
 
   	private procedureTypes: ProcedureTypes[] = [
   			ProcedureTypes.Data, 
@@ -39,7 +43,7 @@ export class ProcedureEditorComponent extends Viewer {
 	  	else{
 	  		return true;
 	  	}
-	  },
+	 },
 	  allowDrop:  (element, { parent, index }) => {
 	    // return true / false based on element, to.parent, to.index. e.g.
 	    return (parent.data.name !== this.getString(ProcedureTypes.IfElseControl) && 
@@ -49,7 +53,18 @@ export class ProcedureEditorComponent extends Viewer {
 	  }
 	};
 
-	constructor(injector: Injector, public dialog: MatDialog){  super(injector, "procedure-editor"); }
+	constructor(injector: Injector, public dialog: MatDialog){  
+		super(injector, "procedure-editor"); 
+		
+		this._moduleList = [];
+
+		let modules = this.flowchartService.getModules();
+		for(let mod=0; mod < modules.length; mod++){
+			let user_module = modules[mod];
+			this._moduleList = this._moduleList.concat(ModuleUtils.getFunctions(user_module));
+		}
+
+	}
 
 	reset():void{
 		this._procedureArr = [];
@@ -65,7 +80,23 @@ export class ProcedureEditorComponent extends Viewer {
 	}
 
 	getImageForType(type: ProcedureTypes): string{
-		return this.getString(type)[0];
+
+		let value:string = "";
+
+		if(type == ProcedureTypes.Data){
+			value = "assignment"
+		}
+		else if(type == ProcedureTypes.Action){
+			value = "function"
+		}
+		else if(type == ProcedureTypes.IfElseControl){
+			value = "if-else"
+		}
+		else if(type == ProcedureTypes.ForLoopControl){
+			value = "for-loop"	
+		}
+
+		return value;
 	}
 
 	getString(type: ProcedureTypes): string{
@@ -135,8 +166,7 @@ export class ProcedureEditorComponent extends Viewer {
 				children: [], 
 				leftExpression: "undefined", 
 				rightExpression: "undefined",
-				model: prod,
-				isExpandedField: 'expanded'
+				model: prod
 			};
 
 			//let dataObj = { id: Math.random() , name: data.getTitle(), type: procedure_type, model: data } ; 
@@ -147,7 +177,9 @@ export class ProcedureEditorComponent extends Viewer {
 				treeItem["rightExpression"] = prod.getRightComponent().expression;
 			}
 			else if(procedure_type === ProcedureTypes.Action ){
-				// todo
+				treeItem["leftExpression"] = prod.getLeftComponent().expression;
+				treeItem["rightExpression"] = prod.getRightComponent().expression;
+				treeItem["params"] = prod.getRightComponent().params;
 			}
 			else if(prod.hasChildren() == true){
 				treeItem["children"] = prod.getChildren().map(function(node, id){
@@ -180,6 +212,14 @@ export class ProcedureEditorComponent extends Viewer {
 	//
 	//
 	//
+	addActionProcedure(fn: {name: string, params: string[], module: string}){
+		let prod_data :  {result: string, module: string, function: any, params: string[]} = 
+			{result: "__", module: fn.module, function: fn.name, params: fn.params};
+		let prod:IProcedure = ProcedureFactory.getProcedure( ProcedureTypes.Action, prod_data);
+		this._node.addProcedure(prod);
+		this.flowchartService.update();
+	}
+
 
 	addProcedure($event, type: ProcedureTypes): void{
 
@@ -202,16 +242,8 @@ export class ProcedureEditorComponent extends Viewer {
 			this._node.addProcedure(prod);
 		}
 		else if(type == ProcedureTypes.Action){
-		    /*let dialogRef = this.dialog.open(ModuleboxComponent, {
-			  height: '400px',
-			  width: '600px',
-			});
-
-			dialogRef.afterClosed().subscribe(result => {
-			  console.log(`Dialog result: ${result}`); // Pizza!
-			});
-
-			dialogRef.close('Pizza!');*/
+		    // todo: Add dialog
+		    this._showToolbox = true;
 		}
 		else{
 			throw Error("Procedure Type invalid");
@@ -233,6 +265,7 @@ export class ProcedureEditorComponent extends Viewer {
 		else if(property == "right"){
 			let comp = procedure.getRightComponent(); 
 			comp.expression = prod.data.rightExpression;
+			comp.params = prod.data.params;
 			procedure.setRightComponent(comp);
 		}
 		else{

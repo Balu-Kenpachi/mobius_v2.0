@@ -1,11 +1,12 @@
 import { Component, OnInit, OnDestroy, Injector } from '@angular/core';
 import { NgClass } from '@angular/common';
 
-import { IGraphNode, IEdge } from '../../../base-classes/node/NodeModule';
+import { IGraphNode, IEdge, GraphNode } from '../../../base-classes/node/NodeModule';
 import { InputPort, OutputPort } from '../../../base-classes/port/PortModule';
 
 import { Viewer } from '../../../base-classes/viz/Viewer';
 import { FlowchartService } from '../../../global-services/flowchart.service';
+import { LayoutService } from '../../../global-services/layout.service';
 
 import {MatTooltipModule} from '@angular/material/tooltip';
 import {MatMenuModule} from '@angular/material/menu';
@@ -30,10 +31,26 @@ export class FlowchartViewerComponent extends Viewer{
   _nodes: IGraphNode[] = [];
   _edges: IEdge[] = [];
 
+  _savedNodes: IGraphNode[] = [];
+
 
   showDialog: {status: boolean, position: number[]} = {status: false, position: [0,0]};
 
-  constructor(injector: Injector){  super(injector, "FlowchartViewer");  }
+  constructor(injector: Injector, private layoutService: LayoutService){  
+    super(injector, "FlowchartViewer");  
+
+    this._savedNodes = this.flowchartService.getSavedNodes();
+  }
+
+  editNode(): void{
+    this.layoutService.showEditor();
+  }
+
+  deleteNode(node_index: number): void{
+    this._selectedNode = undefined; 
+    this.layoutService.hideEditor();
+    this.flowchartService.deleteNode(node_index);
+  }
 
   //
   //
@@ -75,9 +92,6 @@ export class FlowchartViewerComponent extends Viewer{
   }
 
 
-
-
-
   //
   //
   //  Data Related Functions
@@ -93,6 +107,7 @@ export class FlowchartViewerComponent extends Viewer{
   update(){
     this._nodes = this.flowchartService.getNodes();
     this._edges = this.flowchartService.getEdges();
+    this._savedNodes = this.flowchartService.getSavedNodes();
 
     let m = this._margin; 
     let pw = this._portWidth;
@@ -128,10 +143,16 @@ export class FlowchartViewerComponent extends Viewer{
   //
   // Add node and edges
   //
-  addNode($event): void{
+  addNode($event, type: number): void{
     $event.stopPropagation();
-    this.flowchartService.addNode();
-    this.flowchartService.selectNode(this._nodes.length-1);
+    if(type == undefined){
+      this.flowchartService.addNode();
+    }
+    else{
+      this.flowchartService.addNode(type);
+    }
+
+    this.update();
   }
 
   addEdge(outputPortAddress: number[], inputPortAddress: number[]): void{
@@ -167,31 +188,33 @@ export class FlowchartViewerComponent extends Viewer{
   //
   //  node dragging
   //
+  dragStart = {x: 0, y: 0};
   nodeDragStart($event, node): void{
     $event.dataTransfer.setDragImage( new Image(), 0, 0);
     // todo : find more elegant solution
-    node.dragStart = {x: $event.pageX, y: $event.pageY}; 
+    this.dragStart = {x: $event.pageX, y: $event.pageY}; 
     this.pan_mode = false;
   }
 
   nodeDragging($event, node): void{
     this.pan_mode = false;
-    let relX: number = $event.pageX - node.dragStart.x; 
-    let relY: number = $event.pageY - node.dragStart.y;
+    let relX: number = $event.pageX - this.dragStart.x; 
+    let relY: number = $event.pageY - this.dragStart.y;
     node.position[0] += relX/this.zoom; 
     node.position[1] += relY/this.zoom; 
-    node.dragStart = {x: $event.pageX, y: $event.pageY}; 
-
+    
+    this.dragStart = {x: $event.pageX, y: $event.pageY}; 
     this.updateEdges();
   }
 
   nodeDragEnd($event, node): void{
     this.pan_mode = false;
-    let relX: number = $event.pageX - node.dragStart.x; 
-    let relY: number = $event.pageY - node.dragStart.y;
+    let relX: number = $event.pageX - this.dragStart.x; 
+    let relY: number = $event.pageY - this.dragStart.y;
     node.position[0] += relX; 
     node.position[1] += relY; 
 
+    this.dragStart = {x:  0, y: 0};
     this.updateEdges();
   }
 
@@ -205,8 +228,6 @@ export class FlowchartViewerComponent extends Viewer{
                 start: {x: 0, y: 0}, 
                 current: {x: 0, y: 0}
               }
-
-
 
   portDragStart($event, port: InputPort|OutputPort, address: number[]){
       $event.dataTransfer.setDragImage( new Image(), 0, 0);
@@ -222,21 +243,33 @@ export class FlowchartViewerComponent extends Viewer{
         type = "po";
       }
 
-      this.mouse_pos.start = this.getPortPosition(address[0], address[1], type);
-                             /*{x: $event.pageX - (24+181), 
-                               y: $event.pageY - (64+41)};*/
+      let port_position =  this.getPortPosition(address[0], address[1], type);
+
+      this.mouse_pos.start = {x: port_position.x, y: port_position.y };
+      this.mouse_pos.current = {x: port_position.x, y: port_position.y };
+      
+      this.dragStart = {x: $event.layerX, y: $event.layerY};
   }
 
   portDragging($event, port: InputPort|OutputPort){
       // todo: compute total offset of this div dynamically
       // urgent!
-      //nodes.parentElement.parentElement.parentElement.parentElement.offsetLeft
-      this.mouse_pos.current = {x: $event.layerX, 
-                               y: $event.layerY};
-      // draw dashed edge on canvas 
+      let relX: number = $event.layerX - this.dragStart.x; 
+      let relY: number = $event.layerY - this.dragStart.y;
+      this.mouse_pos.current.x += relX/this.zoom; 
+      this.mouse_pos.current.y += relY/this.zoom; 
+      
+      this.dragStart = {x: $event.layerX, y: $event.layerY}; 
   }
 
-  portDragEnd($event: Event, port: InputPort|OutputPort){
+  portDragEnd($event, port: InputPort|OutputPort){
+      let relX: number = $event.layerX - this.dragStart.x; 
+      let relY: number = $event.layerY - this.dragStart.y;
+      this.mouse_pos.current.x += relX/this.zoom; 
+      this.mouse_pos.current.y += relY/this.zoom; 
+      
+      this.dragStart = {x: 0, y: 0}; 
+
       this._startPort = undefined; 
       this._endPort = undefined;
       this._linkMode = false;
@@ -341,19 +374,27 @@ export class FlowchartViewerComponent extends Viewer{
     //output_port_position.y += 30; 
     // add margin to input port in upward direction
     //input_port_position.y -= 30;
+    //
+    
+    let path: string;
+    let move: string = "M";
+    let line: string = " L";
+    let control: string = " Q";
 
-    let deltaY: number= 15; 
-    if(y0 < y1){
-      // do nothing
-    }
-    else{
-      deltaY = -1*deltaY;
-    }
+    // add the start point from output
+    let startPoint: string = output_port_position.x + " " + output_port_position.y;
+    let endPoint: string = input_port_position.x + " " + input_port_position.y;
 
-    var x0 =output_port_position.x;
-    var y0 =output_port_position.y;
-    var x3 =input_port_position.x;
-    var y3 =input_port_position.y;
+    // move downwards/upwards in straight line
+    let translate: number = 50; 
+    let shifted_startPoint: string = output_port_position.x + " " + (output_port_position.y + translate);
+    let shifted_endPoint: string = input_port_position.x + " " + (input_port_position.y - translate);
+
+    // compute curvy line
+    var x0 = output_port_position.x;
+    var y0 = output_port_position.y + translate;
+    var x3 =  input_port_position.x;
+    var y3 =  input_port_position.y - translate;
     
     var mx1=0.75*x0+0.25*x3;
     var mx2=0.25*x0+0.75*x3;
@@ -379,7 +420,13 @@ export class FlowchartViewerComponent extends Viewer{
       y2 =my2-(pSlope*multi);
     }
   
-    var path="M"+x0+" "+y0+" C"+x1+" "+y1+" "+x2+" "+y2+" "+x3+" "+y3;
+    //path="M"+x0+" "+y0+" C"+x1+" "+y1+" "+x2+" "+y2+" "+x3+" "+y3;*/
+
+    path = move + startPoint 
+          + line + shifted_startPoint 
+          + "C" + x1 + " " + y1 + " " + x2 + " " + y2 + " " + x3 + " " + y3
+          //+ line + shifted_endPoint 
+          + line + endPoint;
     
     return path;
   }
@@ -396,6 +443,10 @@ export class FlowchartViewerComponent extends Viewer{
       node.setName(name);
       this.flowchartService.update();
     }
+  }
+
+  saveNode(node: IGraphNode): void{
+    this.flowchartService.saveNode(node);
   }
 
 

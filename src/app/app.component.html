@@ -1,34 +1,33 @@
 <div id="app-container">
 
-  <div class="header">
-      <app-menu></app-menu>
-  </div>
+  <app-menu></app-menu>
 
   <div class="container">
 
-    <split class="split-panel" 
-        direction="horizontal" [gutterSize]="10" [height]="1000">
-       <split-area class="viewport-wrapper" [size]="40">
-           <div class="toggle-view-bar">
-                <div class="btn" [class.active]="isVisible.geometry" (click)="toggle('geometry')"><i class="fa fa-industry"></i></div>
-                <div class="btn" [class.active]="isVisible.code"  (click)="toggle('code')"><i class="fa fa-bug"></i></div>
-           </div>
-           <div class="viewport-container">
-             <app-geometry-viewer *ngIf="isVisible.geometry"></app-geometry-viewer>
-             <app-code-viewer  *ngIf="isVisible.code"></app-code-viewer>
-           </div>
-       </split-area>
-       <split-area [size]="60">
-          <app-flowchart-viewer></app-flowchart-viewer>
+    <div class="wrapper">
+      <split  direction="horizontal" 
+              [gutterSize]="7" 
+              [useTransition]="action.useTransition"
+              (dragEnd)="action.a1s=$event.sizes[0]; action.a2s=$event.sizes[1]; 
+              action.a3s=$event.sizes[2];">
           
-       </split-area>
-    </split>
+            <split-area [visible]="action.a1v" [size]="action.a1s" order="1">
+                <app-viewer-container></app-viewer-container>        
+            </split-area>
+
+            <split-area [visible]="action.a3v" [size]="action.a3s" order="2">
+                <app-flowchart-viewer class="view-wrapper"></app-flowchart-viewer>
+            </split-area>
+
+            <split-area [visible]="action.a2v" [size]="action.a2s" order="3">
+                <app-editor></app-editor> 
+            </split-area>
+            
+      </split>
+    </div>
 
   </div>
 
- <!--  <div class="split-example">
-   
- </div> -->
 </div>
 
 

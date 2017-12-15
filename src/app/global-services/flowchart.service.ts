@@ -4,7 +4,7 @@ import {Subject} from 'rxjs/Subject';
 
 import {IFlowchart, Flowchart, FlowchartReader} from '../base-classes/flowchart/FlowchartModule';
 import {IGraphNode, GraphNode} from '../base-classes/node/NodeModule';
-import {ICodeGenerator, CodeFactory, Module} from "../base-classes/code/CodeModule";
+import {ICodeGenerator, CodeFactory, IModule, ModuleUtils} from "../base-classes/code/CodeModule";
 
 import * as CircularJSON from 'circular-json';
 
@@ -23,16 +23,38 @@ export class FlowchartService {
   private _flowchart: IFlowchart;
 
   private code_generator: ICodeGenerator = CodeFactory.getCodeGenerator("js");
-  private _moduleSet: Module[];
+  private _moduleSet: IModule[];
 
   private _selectedNode: number = 0;
   private _selectedPort: number = 0;
+
+  private _savedNodes: IGraphNode[] = [];
 
   private check(){
     return this._flowchart != undefined;
   }
 
-  constructor() { this.newFile() };
+  constructor() { 
+    this.newFile() 
+    this.checkSavedNodes();
+  };
+
+  checkSavedNodes(): void{ 
+
+    this._savedNodes = [];
+    
+    let myStorage = window.localStorage;
+    let property = "MOBIUS_NODES";
+    let storageString = myStorage.getItem(property);
+    let nodesStorage = JSON.parse( storageString == null ? JSON.stringify({n: []}) : storageString );
+
+    let nodeData = nodesStorage.n; 
+
+    for(let n=0; n < nodeData.length; n++){
+        let n_data = nodeData[n];
+        this._savedNodes.push(n_data);
+    }
+  }
 
   // 
   // message handling between components
@@ -79,7 +101,6 @@ export class FlowchartService {
 
         // read the flowchart
         _this._flowchart = FlowchartReader.readFlowchartFromData(data["flowchart"]);
-        console.log(_this._flowchart);
         _this.update();
         
       }
@@ -94,19 +115,27 @@ export class FlowchartService {
     this._moduleSet = [];
     let moduleSet = this._moduleSet;
 
-    modules.map(function(module){
-        let modClass = ModuleSet[module["name"]];
-        if(modClass.version == module["version"] && modClass.author == module["author"]){
-          moduleSet.push(new modClass());
+    modules.map(function(mod){
+
+        let name: string = ModuleUtils.getName(mod);
+        let version: string = ModuleUtils.getVersion(mod);
+        let author: string = ModuleUtils.getAuthor(mod);
+
+        // select the required module from the global module set - that has all the functions
+        let modClass = ModuleSet[name];
+
+        if( ModuleUtils.isCompatible(mod, modClass) ){
+            moduleSet.push(modClass);
         }
         else{
           throw Error("Module not compatible. Please check version / author");
         }
+
     })
 
   }
 
-  getModules(): Module[]{
+  getModules(): IModule[]{
     return this._moduleSet;
   }
 
@@ -133,7 +162,8 @@ export class FlowchartService {
     this._selectedPort = 0;
     this.update();
 
-    this.loadModules([{name: "Math", version: 1, author: "AKM"}]);
+    this.loadModules([{_name: "SimpleMath", _version: 1, _author: "AKM"}, 
+                      {_name: "ComplexMath", _version: 1, _author: "AKM"}]);
 
     return this._flowchart;
   }
@@ -142,7 +172,7 @@ export class FlowchartService {
   //  returns the flowchart
   //
   getFlowchart(): IFlowchart{
-    console.warn("Flowchart shouldnot be modified outside of this service");
+    //console.warn("Flowchart shouldnot be modified outside of this service");
     return this._flowchart; 
   }
 
@@ -154,13 +184,72 @@ export class FlowchartService {
     return this._flowchart.getEdges();
   }
 
+  getSavedNodes(): any{
+    return this._savedNodes;
+  }
+
+  saveNode(node: IGraphNode): void{
+
+    // todo: check if overwrite
+    if( node.getType() !== undefined ){
+        console.log(this._savedNodes[node.getType()]);
+    }
+    else{
+      let nav: any = navigator;
+      let myStorage = window.localStorage;
+
+      let property = "MOBIUS_NODES";
+      let storageString = myStorage.getItem(property);
+      let nodesStorage = JSON.parse( storageString == null ? JSON.stringify({n: []}) : storageString );
+
+      // add the node
+      nodesStorage.n.push(node);
+      myStorage.setItem( property, JSON.stringify(nodesStorage) );
+      console.log( JSON.parse(myStorage.getItem(property)).n.length + " nodes in the library" );
+
+      /*if (nav.storage && nav.storage.persist)
+        nav.storage.persist().then(granted => {
+          if (granted){
+
+            alert("Storage will not be cleared except by explicit user action");
+          }
+          else{
+            alert("Storage may be cleared by the UA under storage pressure.");
+          }
+        });*/
+
+      this.checkSavedNodes();
+      this.update();
+    }
+
+
+  }
+
   //
   //    add node
   //
-  addNode(type ?: string): void{
-    let default_node_name: string = "hello" + (this._flowchart.getNodes().length + 1);
-    let node:IGraphNode = new GraphNode(default_node_name, type);
-    this._flowchart.addNode(node);
+  addNode(type?: number): void{
+    
+    let new_node: IGraphNode = undefined;
+    let n_data = undefined; 
+
+    if(type !== undefined){
+       n_data = this._savedNodes[type];
+    }
+
+    if( n_data == undefined ){
+      let default_node_name: string = "hello" + (this._flowchart.getNodes().length + 1);
+      new_node = new GraphNode(default_node_name, undefined);
+    }
+    else{
+      let default_node_name: string = n_data["_name"] + (this._flowchart.getNodes().length + 1);
+      new_node = new GraphNode(default_node_name, n_data["_id"]);
+      n_data["lib"] = true;
+      new_node.update(n_data);
+    }
+
+    this._flowchart.addNode(new_node);
+
     this.update();
   }
 
@@ -178,6 +267,19 @@ export class FlowchartService {
     this.update();
   }
 
+
+  deleteNode(node_index: number): void{
+      this._selectedNode = undefined;
+      this.update();
+      // this._flowchart.deleteNode(node_index);
+      // this.update();
+  }
+ 
+
+  deleteEdge(): void{
+
+  }
+
   //
   //  select node
   //
@@ -193,6 +295,10 @@ export class FlowchartService {
   }
 
   getSelectedNode(): IGraphNode{
+
+    if(this._selectedNode == undefined)
+      return undefined;
+
     return this._flowchart.getNodeByIndex(this._selectedNode);
   }
 
@@ -266,6 +372,7 @@ export class FlowchartService {
           document.body.removeChild(link);
       }
   }
- 
+
+
 
 }
