@@ -53,14 +53,14 @@ export class ParameterViewerComponent extends Viewer {
 
     getValue(port :InputPort): any{
 
-        if(port.isConnected()){
+        /*if(port.isConnected()){
           let address = port.getValue().port;
           let otp = this.flowchartService.getFlowchart().getNodeByIndex(address[0]).getOutputByIndex(address[1]);
           return otp.getValue();
         }
-        else{
+        else{*/
           return (port.getValue() || "undefined");
-        }
+        //}
     }
   	//
   	//	this update runs when there is a message from other viewers that something changed; 
@@ -68,11 +68,13 @@ export class ParameterViewerComponent extends Viewer {
   	//
   	update(): void{
   		this._node = this.flowchartService.getSelectedNode();
-      this._inputs = this._node.getInputs();
-      if(this._node != undefined)
+      if(this._node != undefined){
+         this._inputs = this._node.getInputs();
          this.isVisible = true;
-       else
-         this.isVisible = false;
+      }
+      else{
+        this.isVisible = false;
+      }
   	}
 
 }
