@@ -71,7 +71,7 @@ export class CodeGeneratorJS extends CodeGenerator{
 		//
 		//
 		//
-		getFunctionCall(node: IGraphNode, params?: any): string{
+		getFunctionCall(node: IGraphNode, params?: any, executionCode?: boolean): string{
 			let fn_call: string = "";
 			let param_values: string[] = [];
 
@@ -80,7 +80,14 @@ export class CodeGeneratorJS extends CodeGenerator{
 				if(inputs[i].isConnected() == true ){
 					let input_name:string = inputs[i].getName();
 					if( params ){
-						param_values.push( params[ input_name ] );
+
+						if( executionCode == true){
+							param_values.push( "params." + input_name );
+						}
+						else{
+							let p =  params[ input_name ];
+							param_values.push( p );
+						}
 					}
 					else{
 						param_values.push( input_name );
@@ -204,10 +211,12 @@ export class CodeGeneratorJS extends CodeGenerator{
 				let params  = procedure.getRightComponent().params;
 				for( let p=0; p < params.length; p++){
 					let param = params[p];
-					if(param.value !== undefined)
+					if(param.value !== undefined){
 						paramList.push(param.value)
-					else
+					}
+					else{
 						paramList.push(param.type)
+					}
 				}
 
 				let right :IComponent = procedure.getRightComponent();
@@ -219,6 +228,7 @@ export class CodeGeneratorJS extends CodeGenerator{
 				else{
 					init = "";
 				}
+
 
 				code = init = procedure.getLeftComponent().expression 
 						+ " = " 
@@ -276,20 +286,20 @@ export class CodeGeneratorJS extends CodeGenerator{
 		}
 
 		executeNode(node: IGraphNode, params: any, Modules: IModule[]): any{
+			console.log(params);
 			//let gis = this._modules["gis"];
-			//
-
 			let str: string = "(function(){ \
-						" + this.getNodeCode(node) + "\n" + this.getFunctionCall(node, params) + "\n" + "return " + node.getName() + ";" + "})(); \
+						" + this.getNodeCode(node) + "\n" + this.getFunctionCall(node, [], true) + "\n" + "return " + node.getName() + ";" + "})(); \
 						";
 			let result: any;
 
 			try{
+				console.log(str);
 				result = eval(str);
 			}
 			catch(ex){
 				alert("Oops.. Error executing flowchart");
-				throw Error("Error executing");
+				throw Error(ex);
 			}
 			return result;//result;// return result of the node
 		}

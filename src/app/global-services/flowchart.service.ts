@@ -8,7 +8,6 @@ import {ICodeGenerator, CodeFactory, IModule, ModuleUtils} from "../base-classes
 
 import * as CircularJSON from 'circular-json';
 
-
 import * as ModuleSet from "../../assets/modules/AllModules";
 /*import * as ModuleSet from "gs-modelling";*/
 
@@ -135,19 +134,13 @@ export class FlowchartService {
         let author: string = ModuleUtils.getAuthor(mod);
 
         // select the required module from the global module set - that has all the functions
-        let modClass = ModuleSet[name];
-
+        let modClass = ModuleSet[name]; //ModuleUtils.getModuleFromSet(ModuleSet, name);
         if( ModuleUtils.isCompatible(mod, modClass) ){
-
-            if(modClass.isInstance == true){
-              modClass = modClass.getInstance();
-            }
-
             moduleSet.push(modClass);
             moduleMap[name] = modClass;
         }
         else{
-          throw Error("Module not compatible. Please check version / author");
+            throw Error("Module not compatible. Please check version / author");
         }
 
     })
@@ -181,10 +174,11 @@ export class FlowchartService {
     this._selectedPort = 0;
     this.update();
 
-    this.loadModules([{_name: "SimpleMath", _version: 1, _author: "AKM"}, 
-                      {_name: "ComplexMath", _version: 1, _author: "AKM"},
-                      {_name: "GS_Modeling", _version: 0.1, _author: "Patrick"}]);
-    //this.loadModules([{_name: "gs-modeling", _version: 0.1, _author: "AKM"}]);                 
+    this.loadModules([{_name: "SimpleMath", _version: 0.1, _author: "Patrick"}, 
+                      {_name: "ComplexMath", _version: 0.1, _author: "Patrick"},
+                      {_name: "Model", _version: 0.1, _author: "Patrick"},
+                      {_name: "Point", _version: 0.1, _author: "Patrick"},
+                      {_name: "Pline", _version: 0.1, _author: "Patrick"}]);
 
     return this._flowchart;
   }
